@@ -52,6 +52,8 @@ INSTALLED_APPS = [
 	'drf_yasg',
 	'rest_framework_simplejwt',
 	'minio_storage',
+
+	'users.app.UsersConfig',
 ]
 
 SITE_ID = 1
