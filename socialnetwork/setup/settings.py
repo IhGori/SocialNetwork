@@ -53,7 +53,9 @@ INSTALLED_APPS = [
 	'rest_framework_simplejwt',
 	'minio_storage',
 
-	'users.app.UsersConfig',
+	'users.apps.UsersConfig',
+	'posts.apps.PostsConfig',
+	'chat.apps.ChatConfig',
 ]
 
 SITE_ID = 1
