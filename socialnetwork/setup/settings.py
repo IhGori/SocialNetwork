@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 	'drf_yasg',
 	'rest_framework_simplejwt',
 	'minio_storage',
+	'corsheaders',
 
 	'users.apps.UsersConfig',
 	'posts.apps.PostsConfig',
@@ -74,6 +75,7 @@ MIDDLEWARE = [
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	"allauth.account.middleware.AccountMiddleware",
+	'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'setup.urls'
@@ -205,3 +207,24 @@ MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = "users.User"
+
+CORS_ALLOWED_ORIGINS = [
+	'http://localhost:3000',
+]
+
+CORS_ALLOW_METHODS = [
+	'GET',
+	'POST',
+	'PUT',
+	'PATCH',
+	'DELETE',
+	'OPTIONS'
+]
+
+CORS_ALLOW_HEADERS = [
+	'Accept',
+	'Accept-Language',
+	'Content-Language',
+	'Content-Type',
+	'Authorization',
+]
