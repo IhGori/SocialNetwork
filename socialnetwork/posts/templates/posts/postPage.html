@@ -1,61 +1,66 @@
+<!-- posts.html -->
 <!DOCTYPE html>
 <html>
 <head>
-	<style>
-		body {
-			font-family: Arial, sans-serif;
-		}
-		.post-container {
-			width: 400px;
-			margin: 0 auto;
-			border: 1px solid #ccc;
-			border-radius: 5px;
-			overflow: hidden;
-			margin-top: 20px;
-		}
-		.post-details {
-			padding: 10px;
-			background-color: #f2f2f2;
-		}
-		.post-body {
-			padding: 10px;
-		}
-		.like-section {
-			padding: 10px;
-			background-color: #f2f2f2;
-		}
-		.like-button {
-			cursor: pointer;
-		}
-	</style>
+    <title>Posts</title>
 </head>
 <body>
-	<center><h1>Postagens do Usuário: {{ request.user.username }}</h1></center>
-	<br>
-    <h1>
-        oi
-    </h1>
-	{% if request.user.is_authenticated %}
-	<center> Sair da página chat <a href="{% url 'logout-user' %}">Logout</a></center>
-	{% endif %}
+    <h1>Minhas Postagens e dos Amigos</h1>
+    <div id="posts-container">
+        <!-- Aqui serão exibidas as postagens -->
+    </div>
 
-	{% for post in user_posts %}
-	<div class="post-container">
-		<div class="post-details">
-			<h3>{{ post.title }}</h3>
-			<p>Autor: {{ post.author }}</p>
-		</div>
-		<div class="post-body">
-			<p>{{ post.body }}</p>
-		</div>
-		<div class="like-section">
-			<button class="like-button" id="like-button">Like</button>
-			<span id="like-count">{{ post.like_count }}</span> Likes
-		</div>
-	</div>
-	{% endfor %}
+    <h2>Criar Nova Postagem</h2>
+    <form id="post-form">
+        <input type="text" id="title" placeholder="Título">
+        <textarea id="body" placeholder="Corpo da postagem"></textarea>
+        <button type="submit">Postar</button>
+    </form>
+
+    <script>
+        const postsContainer = document.getElementById('posts-container');
+        const postForm = document.getElementById('post-form');
+
+        // Função para enviar a nova postagem para o servidor
+        async function createPost(event) {
+            event.preventDefault();
+            const title = document.getElementById('title').value;
+            const body = document.getElementById('body').value;
+
+            // Enviar a nova postagem para o servidor
+            const response = await fetch('/api/posts/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, body })
+            });
+
+            if (response.ok) {
+                // Atualizar a lista de postagens após criar uma nova
+                fetchPosts();
+            }
+        }
+
+        // Função para buscar e exibir as postagens do servidor
+        async function fetchPosts() {
+            const response = await fetch('/api/posts/');
+            const data = await response.json();
+
+            postsContainer.innerHTML = ''; // Limpar o conteúdo anterior das postagens
+
+            data.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.innerHTML = `<h3>${post.title}</h3><p>${post.body}</p>`;
+                postsContainer.appendChild(postElement);
+            });
+        }
+
+        // Ao enviar o formulário, chamar a função createPost
+        postForm.addEventListener('submit', createPost);
+
+        // Chamar fetchPosts ao carregar a página para exibir as postagens
+        fetchPosts();
+    </script>
 </body>
-<script>
-
-</script>
 </html>

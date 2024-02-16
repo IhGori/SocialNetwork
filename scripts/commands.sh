@@ -16,8 +16,7 @@ done
 
 echo "✅ Redis Started Successfully (redis:$REDIS_PORT)"
 
-python manage.py collectstatic --noinput
-# mc cp --recursive ./static_files minio/local-static
 python manage.py makemigrations --noinput
 python manage.py migrate --noinput
+python manage.py collectstatic --noinput
 python manage.py runserver 0.0.0.0:8000

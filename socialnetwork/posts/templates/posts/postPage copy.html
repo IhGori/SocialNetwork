@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+		}
+
+		.post-container {
+			width: 400px;
+			margin: 0 auto;
+			border: 2px solid #080808;
+			border-radius: 5px;
+			overflow: hidden;
+			margin-top: 20px;
+		}
+
+		.post-details {
+			padding: 10px;
+			background-color: #f2f2f2;
+		}
+
+		.post-body {
+			padding: 10px;
+		}
+
+		.like-section {
+			padding: 10px;
+			background-color: #f2f2f2;
+		}
+
+		.like-button {
+			cursor: pointer;
+		}
+	</style>
+</head>
+
+<body>
+	<center>
+		<h1>Postagens do Usuário: {{ request.user.username }}</h1>
+	</center>
+	<br>
+
+	{% for post in user_posts %}
+	<div class="post-container">
+		<div class="post-details">
+			<h3>{{ post.title }}</h3>
+			<p>Autor: {{ post.author }}</p>
+		</div>
+		{% if post.picture %}
+		<div class="post-image">
+			<img src="{{ post.picture }}" alt="Imagem do Post">
+			<img src="http://127.0.0.1:9000/local-media/dog2.png" alt="">
+			<img src="http://localhost:9000/local-media/dog2.png" alt="">
+		</div>
+		{% endif %}
+		<div class="post-body">
+			<p>{{ post.body }}</p>
+		</div>
+		<div class="like-section">
+			<button class="like-button" id="like-button">Like</button>
+			<span id="like-count">{{ post.like_count }}</span> Likes
+		</div>
+	</div>
+	{% endfor %}
+</body>
+<script>
+
+</script>
+
+</html>
