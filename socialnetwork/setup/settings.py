@@ -61,7 +61,7 @@ INSTALLED_APPS = [
 
 SITE_ID = 1
 
-LOGIN_REDIRECT_URL = "chat-page"
+# LOGIN_REDIRECT_URL = "chat-page"
 LOGOU_REDIRECT_URL = "login-user"
 # LOGIN_URL = '/api/user/login'
 
@@ -135,7 +135,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=999999),
 	'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 	# 'SIGNING_KEY': SECRET_KEY,
 	'AUTH_HEADER_TYPES': ('Bearer',),
@@ -187,6 +187,7 @@ STATIC_ROOT = './static_files/'
 DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
 # STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
 MINIO_STORAGE_ENDPOINT = 'minio:9000'
+#MINIO_STORAGE_ENDPOINT = 'http://localhost:9000'
 MINIO_STORAGE_ACCESS_KEY = config('MINIO_STORAGE_ACCESS_KEY')
 MINIO_STORAGE_SECRET_KEY = config('MINIO_STORAGE_SECRET_KEY')
 MINIO_STORAGE_USE_HTTPS = False

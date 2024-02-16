@@ -2,23 +2,34 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from users.models import User
 from django.shortcuts import render, redirect
-from .models import Post
+from .models import Post, Comment, Like
 from django.http import JsonResponse
-from .serializers import PostModelSerializer, PostCreateSerializer, PostUpdateSerializer
+from .serializers import PostModelSerializer, PostCreateSerializer, PostUpdateSerializer, CommentModelSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.shortcuts import get_object_or_404
+
+import sys
+from PIL import Image
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from django.db.models import Q
 
-def postPage(request, *args, **kwargs):
-	if not request.user.is_authenticated:
-		return redirect("login-user")
 
-	user_posts = Post.objects.filter(
+def posts_page(request):
+	return render(request, 'posts.html')
+
+def postPage2(request, *args, **kwargs):
+	print('entrou no postPage')
+
+	user_posts = Post.objects.select_related('author').filter(
 		Q(author=request.user) | Q(author__friends=request.user)
 	).distinct()
-	
+
+	serialized_posts = PostModelSerializer(user_posts, many=True).data
+
 	context = {
-		'user_posts': user_posts
+		'user_posts': serialized_posts
 	}
 	return render(request, "posts/postPage.html", context)
 
@@ -42,7 +53,26 @@ class PostViewsets(viewsets.ModelViewSet):
 
 			serializer = PostCreateSerializer(data=request.data)
 			serializer.is_valid(raise_exception=True)
-			serializer.save(author=user)
+
+			picture = request.data.get('picture')
+			if picture:
+				image = Image.open(picture)
+				image.thumbnail((240, 240), Image.BILINEAR)
+				# Converter de volta para um arquivo mantendo o formato original
+				output = BytesIO()
+				image.save(output, format=image.format)
+				output.seek(0)
+
+				picture = InMemoryUploadedFile(
+					output,
+					'ImageField',
+					"%s.%s" % (picture.name.split('.')[0], image.format.lower()),
+					'image/%s' % image.format.lower(),
+					sys.getsizeof(output),
+					None
+				)
+
+			serializer.save(author=user, picture=picture)
 
 			return JsonResponse({
 				"message": 'Postagem criada com sucesso!',
@@ -110,22 +140,114 @@ class PostViewsets(viewsets.ModelViewSet):
 		
 	def like_post(self, request, pk):
 		post = self.get_object()
-		if request.user in post.likes.all():
-			return Response({"error": "Você já deu like nesse post."}, status=status.HTTP_400_BAD_REQUEST)
-		post.likes.add(request.user)
-
-		return Response({"message": "Você deu um like."}, status=status.HTTP_201_CREATED)
+		user = request.user
+		
+		if user.is_authenticated:
+			if post.likes.filter(user=user).exists():
+				return Response({"error": "Você já deu like nesse post."}, status=status.HTTP_400_BAD_REQUEST)
+			else:
+				Like.objects.create(post=post, user=user)
+				return Response({"message": "Você deu um like."}, status=status.HTTP_201_CREATED)
+		else:
+			return Response({"error": "Usuário não autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
 
 	def unlike_post(self, request, pk):
 		post = self.get_object()
-		if request.user not in post.likes.all():
-			return Response({"error": "Você ainda não deu like nesse post."}, status=status.HTTP_400_BAD_REQUEST)
-		post.likes.remove(request.user)
-
-		return Response({"message": "Like removido com sucesso."}, status=status.HTTP_204_NO_CONTENT)
-
+		user = request.user
+		
+		if user.is_authenticated:
+			like = post.likes.filter(user=user).first()
+			if like:
+				like.delete()
+				return Response({"message": "Like removido com sucesso."}, status=status.HTTP_200_OK)
+			else:
+				return Response({"error": "Você ainda não deu like nesse post."}, status=status.HTTP_400_BAD_REQUEST)
+		else:
+			return Response({"error": "Usuário não autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
 
 	@classmethod
 	def as_view(cls, actions=None, **kwargs):
 		actions['index'] = 'index'
 		return super().as_view(actions=actions, **kwargs)
+
+class CommentViewSet(viewsets.ModelViewSet):
+	serializer_class = CommentModelSerializer
+
+	JWT_authenticator = JWTAuthentication()
+
+	def get_queryset(self):
+		post_id = self.kwargs['post_id']
+		return Comment.objects.filter(post_id=post_id)
+
+	def create(self, request, post_id):
+		response = self.JWT_authenticator.authenticate(request)
+		
+		if response is not None:
+			user, token = response
+
+			post = get_object_or_404(Post, pk=post_id)
+			if user == post.author or user in post.author.friends.all():
+				serializer = CommentModelSerializer(data=request.data)
+				if serializer.is_valid():
+					serializer.save(post=post, author=request.user)
+					return JsonResponse({
+						"message": 'Comentário adicionado com sucesso!',
+					}, status=status.HTTP_200_OK)
+				return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+			else:
+				return JsonResponse({
+					"error": 'Você não tem permissão para adicionar comentários nsta postagem',
+				}, status=401)
+
+		else:
+			return JsonResponse({
+				"error": 'Token de acesso ausente ou inválido',
+			}, status=401)
+
+	def update(self, request, post_id, pk):
+		response = self.JWT_authenticator.authenticate(request)
+		
+		if response is not None:
+			user, token = response
+
+			comment = get_object_or_404(Comment, pk=pk, post_id=post_id)
+
+			if user == comment.author:
+				self.check_object_permissions(request, comment)
+				serializer = CommentModelSerializer(comment, data=request.data)
+				if serializer.is_valid():
+					serializer.save()
+					return JsonResponse({
+						"message": 'Comentário atualizado com sucesso!',
+					}, status=status.HTTP_200_OK)
+				return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+			else:
+				return JsonResponse({
+					"error": 'Você não tem permissões para atualizar esse comentáro',
+				}, status=403)
+		else:
+			return JsonResponse({
+				"error": 'Token de acesso ausente ou inválido',
+			}, status=401)	
+
+	def destroy(self, request, post_id, pk):
+		response = self.JWT_authenticator.authenticate(request)
+		
+		if response is not None:
+			user, token = response
+
+			comment = get_object_or_404(Comment, pk=pk, post_id=post_id)
+			if user == comment.author:
+				comment.delete()
+				return JsonResponse({
+					"message": 'Comentário removido com sucesso!',
+				}, status=status.HTTP_200_OK)
+			else:
+				return JsonResponse({
+					"error": 'Este comentário somente o autor poderá remover',
+				}, status=403)
+		else:
+			return JsonResponse({
+				"error": 'Token de acesso ausente ou inválido',
+			}, status=401)
+
