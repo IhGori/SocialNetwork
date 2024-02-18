@@ -29,9 +29,9 @@ schema_view = get_schema_view(
 urlpatterns = [
 	path('admin/', admin.site.urls),
 	path('api-auth/', include('rest_framework.urls')),
-	path('api/', include('users.urls', namespace='users')),
-	path('api/', include('posts.urls', namespace='posts')),
-	path("chat/", include("chat.urls")),
+	path('api/user/', include('users.urls', namespace='users')),
+	path('api/posts/', include('posts.urls', namespace='posts')),
+	path('api/chat/', include('chat.urls', namespace='chat')),
 	path('accounts/', include('allauth.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

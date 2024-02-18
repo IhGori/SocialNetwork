@@ -218,7 +218,6 @@ class CommentViewSet(viewsets.ModelViewSet):
 				return JsonResponse({
 					"error": 'Você não tem permissão para adicionar comentários nsta postagem',
 				}, status=401)
-
 		else:
 			return JsonResponse({
 				"error": 'Token de acesso ausente ou inválido',
