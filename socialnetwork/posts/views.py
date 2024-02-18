@@ -20,8 +20,6 @@ def posts_page(request):
 	return render(request, 'posts.html')
 
 def postPage2(request, *args, **kwargs):
-	print('entrou no postPage')
-
 	user_posts = Post.objects.select_related('author').filter(
 		Q(author=request.user) | Q(author__friends=request.user)
 	).distinct()
