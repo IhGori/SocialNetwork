@@ -7,6 +7,8 @@ from django.http import JsonResponse
 from .serializers import PostModelSerializer, PostCreateSerializer, PostUpdateSerializer, CommentModelSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import get_object_or_404
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 import sys
 from PIL import Image
@@ -52,6 +54,7 @@ class PostViewsets(viewsets.ModelViewSet):
 			serializer = PostCreateSerializer(data=request.data)
 			serializer.is_valid(raise_exception=True)
 
+			text = request.data.get('body')
 			picture = request.data.get('picture')
 			if picture:
 				image = Image.open(picture)
@@ -71,6 +74,16 @@ class PostViewsets(viewsets.ModelViewSet):
 				)
 
 			serializer.save(author=user, picture=picture)
+			
+			channel_layer = get_channel_layer()
+			async_to_sync(channel_layer.group_send)(
+				'post_updates',
+				{
+					'type': 'post_created',
+					'message': 'Nova postagem criada',
+					'text': text
+				}
+			)
 
 			return JsonResponse({
 				"message": 'Postagem criada com sucesso!',
@@ -101,7 +114,18 @@ class PostViewsets(viewsets.ModelViewSet):
 				partial = kwargs.pop('partial', False)
 				serializer = PostUpdateSerializer(instance, data=request.data, partial=partial)
 				serializer.is_valid(raise_exception=True)
+				updated_data = serializer.validated_data
 				serializer.save()
+
+				channel_layer = get_channel_layer()
+				async_to_sync(channel_layer.group_send)(
+					'post_updates',
+					{
+						'type': 'post_updated',
+						'message': 'Postagem atualizada',
+						'updated_data': updated_data
+					}
+				)
 				return JsonResponse({
 					"message": 'Postagem atualizada com sucesso!',
 				})
@@ -124,6 +148,14 @@ class PostViewsets(viewsets.ModelViewSet):
 
 			if instance.author == user:
 				self.perform_destroy(instance)
+				channel_layer = get_channel_layer()
+				async_to_sync(channel_layer.group_send)(
+					'post_updates',
+					{
+						'type': 'post_deleted',
+						'message': 'Post deletado'
+					}
+				)
 				return JsonResponse({
 					"message": 'Postagem removida com sucesso!',
 				})
@@ -136,32 +168,56 @@ class PostViewsets(viewsets.ModelViewSet):
 				"error": 'Token de acesso ausente ou inválido',
 			}, status=401)
 		
-	def like_post(self, request, pk):
-		post = self.get_object()
-		user = request.user
+	def like_post(self, request, *args, **kwargs):
+		response = self.JWT_authenticator.authenticate(request)
 		
-		if user.is_authenticated:
+		if response is not None:
+			user, token = response
+
+			post = self.get_object()
 			if post.likes.filter(user=user).exists():
-				return Response({"error": "Você já deu like nesse post."}, status=status.HTTP_400_BAD_REQUEST)
+					return Response({"error": "Você já deu like nesse post."}, status=status.HTTP_400_BAD_REQUEST)
 			else:
 				Like.objects.create(post=post, user=user)
+				channel_layer = get_channel_layer()
+				async_to_sync(channel_layer.group_send)(
+					'post_updates',
+					{
+						'type': 'like_created',
+						'message': 'Like adicionado'
+					}
+				)
 				return Response({"message": "Você deu um like."}, status=status.HTTP_201_CREATED)
 		else:
-			return Response({"error": "Usuário não autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
+			return JsonResponse({
+				"error": 'Token de acesso ausente ou inválido',
+			}, status=401)
 
 	def unlike_post(self, request, pk):
-		post = self.get_object()
-		user = request.user
+		response = self.JWT_authenticator.authenticate(request)
 		
-		if user.is_authenticated:
+		if response is not None:
+			user, token = response
+
+			post = self.get_object()
 			like = post.likes.filter(user=user).first()
 			if like:
 				like.delete()
+				channel_layer = get_channel_layer()
+				async_to_sync(channel_layer.group_send)(
+					'post_updates',
+					{
+						'type': 'like_deleted',
+						'message': 'Like adicionado'
+					}
+				)
 				return Response({"message": "Like removido com sucesso."}, status=status.HTTP_200_OK)
 			else:
 				return Response({"error": "Você ainda não deu like nesse post."}, status=status.HTTP_400_BAD_REQUEST)
 		else:
-			return Response({"error": "Usuário não autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
+			return JsonResponse({
+				"error": 'Token de acesso ausente ou inválido',
+			}, status=401)
 
 	def friends_posts(self, request):
 		response = self.JWT_authenticator.authenticate(request)
@@ -210,6 +266,18 @@ class CommentViewSet(viewsets.ModelViewSet):
 				serializer = CommentModelSerializer(data=request.data)
 				if serializer.is_valid():
 					serializer.save(post=post, author=request.user)
+
+					updated_data = serializer.validated_data
+
+					channel_layer = get_channel_layer()
+					async_to_sync(channel_layer.group_send)(
+						'post_updates',
+						{
+							'type': 'comment_created',
+							'message': 'Comentário adicionado',
+							'created_comment': updated_data
+						}
+					)
 					return JsonResponse({
 						"message": 'Comentário adicionado com sucesso!',
 					}, status=status.HTTP_200_OK)
@@ -236,6 +304,14 @@ class CommentViewSet(viewsets.ModelViewSet):
 				serializer = CommentModelSerializer(comment, data=request.data)
 				if serializer.is_valid():
 					serializer.save()
+					channel_layer = get_channel_layer()
+					async_to_sync(channel_layer.group_send)(
+						'post_updates',
+						{
+							'type': 'comment_updated',
+							'message': 'Comentário atualizado'
+						}
+					)
 					return JsonResponse({
 						"message": 'Comentário atualizado com sucesso!',
 					}, status=status.HTTP_200_OK)
@@ -258,6 +334,14 @@ class CommentViewSet(viewsets.ModelViewSet):
 			comment = get_object_or_404(Comment, pk=pk, post_id=post_id)
 			if user == comment.author:
 				comment.delete()
+				channel_layer = get_channel_layer()
+				async_to_sync(channel_layer.group_send)(
+					'post_updates',
+					{
+						'type': 'comment_deleted',
+						'message': 'Comentário deletado'
+					}
+				)
 				return JsonResponse({
 					"message": 'Comentário removido com sucesso!',
 				}, status=status.HTTP_200_OK)
