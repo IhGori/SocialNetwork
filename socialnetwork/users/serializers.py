@@ -50,9 +50,15 @@ class BaseUserSerializer(serializers.ModelSerializer):
 	profile_picture = serializers.ImageField(
 		required=False
 	)
+	
+	friends = serializers.SerializerMethodField()
 
 	class Meta:
-		fields = ('username', 'email', 'password', 'phone', 'gender')
+		fields = ('username', 'email', 'password', 'phone', 'gender', 'friends')
+
+	def get_friends(self, obj):
+		friends = obj.friends.all()
+		return [{'id': friend.id, 'username': friend.username} for friend in friends]
 
 class UserSerializer(BaseUserSerializer):
 	password2 = serializers.CharField(
@@ -63,9 +69,10 @@ class UserSerializer(BaseUserSerializer):
 		}
 	)
 
+	id = serializers.UUIDField()
 	class Meta:
 		model = User
-		fields = BaseUserSerializer.Meta.fields + ('password2',)
+		fields = BaseUserSerializer.Meta.fields + ('id', 'password2')
 
 	def validate(self, attrs):
 		if attrs['password'] != attrs['password2']:

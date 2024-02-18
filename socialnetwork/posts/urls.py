@@ -9,6 +9,9 @@ urlpatterns = [
 		'get': 'index',
 		'post': 'create',
 	})),
+	path('posts/friends/', PostViewsets.as_view({
+		'get': 'friends_posts'
+	}), name="friends-posts"),
 	path('posts/<uuid:pk>/', PostViewsets.as_view({
 		'get': 'retrieve',
 		'put': 'update',

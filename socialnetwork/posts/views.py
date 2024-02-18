@@ -41,7 +41,7 @@ class PostViewsets(viewsets.ModelViewSet):
 	JWT_authenticator = JWTAuthentication()
 
 	def index(self, request):
-		posts = Post.objects.all()
+		posts = Post.objects.all().order_by('-created_at')
 		serializer = PostModelSerializer(posts, many=True, context={'request': request})
 		return Response(serializer.data)
 
@@ -165,6 +165,26 @@ class PostViewsets(viewsets.ModelViewSet):
 		else:
 			return Response({"error": "Usuário não autenticado."}, status=status.HTTP_401_UNAUTHORIZED)
 
+	def friends_posts(self, request):
+		response = self.JWT_authenticator.authenticate(request)
+		
+		if response is not None:
+			user, token = response
+
+			friends_ids = user.friends.values_list('id', flat=True)
+
+			user_and_friends_posts = Post.objects.filter(
+				Q(author=user) | Q(author__in=friends_ids)
+			).distinct().order_by('-created_at')
+
+			serializer = PostModelSerializer(user_and_friends_posts, many=True)
+
+			return Response(serializer.data)
+		else:
+			return JsonResponse({
+				"error": 'Token de acesso ausente ou inválido',
+			}, status=401)
+
 	@classmethod
 	def as_view(cls, actions=None, **kwargs):
 		actions['index'] = 'index'
@@ -176,8 +196,10 @@ class CommentViewSet(viewsets.ModelViewSet):
 	JWT_authenticator = JWTAuthentication()
 
 	def get_queryset(self):
-		post_id = self.kwargs['post_id']
-		return Comment.objects.filter(post_id=post_id)
+		post_id = self.kwargs.get('post_id')
+		if post_id is not None:
+			return Comment.objects.filter(post_id=post_id)
+		return Comment.objects.none()
 
 	def create(self, request, post_id):
 		response = self.JWT_authenticator.authenticate(request)
