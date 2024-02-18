@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework import generics
-from .serializers import UserSerializer, UserUpdateSerializer
+from .serializers import UserSerializer, UserUpdateSerializer, BaseUserSerializer
 from .models import User
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -11,7 +11,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .tokens import create_jwt_pair_for_user
 
 class RegisterView(APIView):
@@ -66,12 +66,15 @@ class LoginView(APIView):
 			raise AuthenticationFailed('A senha está incorreta!')
 		
 		tokens = create_jwt_pair_for_user(user)
+		
+		serializer = UserSerializer(user)
 
 		return JsonResponse({
 			"message": 'Login realizado com sucesso!',
-			'tokens': tokens
+			'tokens': tokens,
+			'user': serializer.data,
 		})
-	
+
 class UserDetailView(APIView):
 	def delete(self, request, user_id):
 		user = get_object_or_404(User, id=user_id)

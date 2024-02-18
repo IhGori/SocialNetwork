@@ -9,11 +9,6 @@ class Post(models.Model):
 		editable=False
 	)
 
-	title = models.CharField(
-		max_length=50,
-		blank=True
-	)
-
 	body = models.TextField()
 
 	author = models.ForeignKey(
@@ -27,8 +22,12 @@ class Post(models.Model):
 		null=True
 	)
 
+	created_at = models.DateTimeField(
+		auto_now_add=True
+	)
+
 	def __str__(self):
-		return str(self.title)
+		return str(self.author)
 
 class Like(models.Model):
 	id = models.UUIDField(

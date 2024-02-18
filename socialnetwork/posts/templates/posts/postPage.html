@@ -1,9 +1,11 @@
 <!-- posts.html -->
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Posts</title>
 </head>
+
 <body>
     <h1>Minhas Postagens e dos Amigos</h1>
     <div id="posts-container">
@@ -12,7 +14,6 @@
 
     <h2>Criar Nova Postagem</h2>
     <form id="post-form">
-        <input type="text" id="title" placeholder="Título">
         <textarea id="body" placeholder="Corpo da postagem"></textarea>
         <button type="submit">Postar</button>
     </form>
@@ -24,7 +25,6 @@
         // Função para enviar a nova postagem para o servidor
         async function createPost(event) {
             event.preventDefault();
-            const title = document.getElementById('title').value;
             const body = document.getElementById('body').value;
 
             // Enviar a nova postagem para o servidor
@@ -33,7 +33,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ title, body })
+                body: JSON.stringify({ body })
             });
 
             if (response.ok) {
@@ -51,7 +51,7 @@
 
             data.forEach(post => {
                 const postElement = document.createElement('div');
-                postElement.innerHTML = `<h3>${post.title}</h3><p>${post.body}</p>`;
+                postElement.innerHTML = `<p>${post.body}</p>`;
                 postsContainer.appendChild(postElement);
             });
         }
@@ -63,4 +63,5 @@
         fetchPosts();
     </script>
 </body>
+
 </html>

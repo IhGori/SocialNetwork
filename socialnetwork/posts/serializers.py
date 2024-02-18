@@ -26,10 +26,11 @@ class PostModelSerializer(serializers.ModelSerializer):
 	like_count = serializers.SerializerMethodField()
 	is_liked = serializers.SerializerMethodField()
 	comments = CommentModelSerializer(many=True, read_only=True)
+	comments_count = serializers.SerializerMethodField()
 
 	class Meta:
 			model = Post
-			fields = ('id', 'title', 'body', 'likes', 'author', 'like_count', 'is_liked', 'picture', 'comments')
+			fields = ('id', 'body', 'likes', 'author', 'like_count', 'is_liked', 'picture', 'comments', 'created_at', 'comments_count')
 	
 	def get_author(self, obj):
 		return obj.author.username
@@ -42,13 +43,16 @@ class PostModelSerializer(serializers.ModelSerializer):
 		if request and request.user.is_authenticated:
 			return obj.likes.filter(id=request.user.id).exists()
 		return False
-	
+
+	def get_comments_count(self, obj):
+		return obj.comments.count()
+
 class PostCreateSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Post
-		fields = ('title', 'picture', 'body')
+		fields = ('picture', 'body')
 
 class PostUpdateSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Post
-		fields = ('title', 'picture', 'body')
+		fields = ('picture', 'body')
