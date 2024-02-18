@@ -52,7 +52,7 @@ class Like(models.Model):
 	)
 
 	def __str__(self):
-		return f"Like por {self.user.username} em {self.post.title}"
+		return f"Like por {self.user.username}"
 
 class Comment(models.Model):
 	id = models.UUIDField(
@@ -79,4 +79,4 @@ class Comment(models.Model):
 	)
 
 	def __str__(self):
-		return f"Comentário por {self.author.username} on {self.post.title}"
+		return f"Comentário por {self.author.username}"

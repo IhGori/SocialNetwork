@@ -24,25 +24,18 @@ class PostModelSerializer(serializers.ModelSerializer):
 	likes = LikeModelSerializer(many=True, read_only=True)
 	author = serializers.SerializerMethodField()
 	like_count = serializers.SerializerMethodField()
-	is_liked = serializers.SerializerMethodField()
 	comments = CommentModelSerializer(many=True, read_only=True)
 	comments_count = serializers.SerializerMethodField()
 
 	class Meta:
 			model = Post
-			fields = ('id', 'body', 'likes', 'author', 'like_count', 'is_liked', 'picture', 'comments', 'created_at', 'comments_count')
-	
+			fields = ('id', 'body', 'likes', 'author', 'like_count', 'picture', 'comments', 'created_at', 'comments_count')
+
 	def get_author(self, obj):
 		return obj.author.username
 	
 	def get_like_count(self, obj):
 		return len(obj.likes.all())
-	
-	def get_is_liked(self, obj):
-		request = self.context.get('request', None)
-		if request and request.user.is_authenticated:
-			return obj.likes.filter(id=request.user.id).exists()
-		return False
 
 	def get_comments_count(self, obj):
 		return obj.comments.count()
