@@ -8,7 +8,7 @@ urlpatterns = [
 	path('', PostViewsets.as_view({
 		'get': 'index',
 		'post': 'create',
-	})),
+	}), name='posts-list'),
 	path('friends/', PostViewsets.as_view({
 		'get': 'friends_posts'
 	}), name="friends-posts"),
@@ -16,7 +16,7 @@ urlpatterns = [
 		'get': 'retrieve',
 		'put': 'update',
 		'delete': 'destroy',
-	})),
+	}), name='posts-detail'),
 	path('<uuid:pk>/like/', PostViewsets.as_view({
 		'post': 'like_post',
 		'delete': 'unlike_post',

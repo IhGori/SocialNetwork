@@ -9,6 +9,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import get_object_or_404
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from rest_framework import status
 
 import sys
 from PIL import Image
@@ -56,22 +57,6 @@ class PostViewsets(viewsets.ModelViewSet):
 
 			text = request.data.get('body')
 			picture = request.data.get('picture')
-			if picture:
-				image = Image.open(picture)
-				image.thumbnail((240, 240), Image.BILINEAR)
-				# Converter de volta para um arquivo mantendo o formato original
-				output = BytesIO()
-				image.save(output, format=image.format)
-				output.seek(0)
-
-				picture = InMemoryUploadedFile(
-					output,
-					'ImageField',
-					"%s.%s" % (picture.name.split('.')[0], image.format.lower()),
-					'image/%s' % image.format.lower(),
-					sys.getsizeof(output),
-					None
-				)
 
 			serializer.save(author=user, picture=picture)
 			
@@ -84,14 +69,13 @@ class PostViewsets(viewsets.ModelViewSet):
 					'text': text
 				}
 			)
-
 			return JsonResponse({
 				"message": 'Postagem criada com sucesso!',
-			})
+			}, status=status.HTTP_201_CREATED)
 		else:
 			return JsonResponse({
 				"error": 'Token de acesso ausente ou inválido',
-			}, status=401)
+			}, status=status.HTTP_401_UNAUTHORIZED)
 
 	def retrieve(self, request, pk=None):
 		post = Post.objects.filter(pk=pk).first()
@@ -158,7 +142,7 @@ class PostViewsets(viewsets.ModelViewSet):
 				)
 				return JsonResponse({
 					"message": 'Postagem removida com sucesso!',
-				})
+				}, status=status.HTTP_204_NO_CONTENT)
 			else:
 				return JsonResponse({
 					"error": 'Você não tem permissão para remover esta postagem',
