@@ -18,3 +18,4 @@ django-minio-backend>=3.1.0,<3.2
 django-cors-headers>=4.3.1,<4.4
 cryptography>=42.0.3,<42.1.0
 python-dotenv>=1.0.1,<1.1.0
+factory_boy>=3.3.0,<3.4.0

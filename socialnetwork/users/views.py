@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework import generics
-from .serializers import UserSerializer, UserUpdateSerializer, BaseUserSerializer
+from .serializers import UserSerializer, UserUpdateSerializer, CreateUserSerializer
 from .models import User
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -34,11 +34,11 @@ class RegisterView(APIView):
 		),
 	)
 	def post(self, request):
-		serializer = UserSerializer(data=request.data)
+		serializer = CreateUserSerializer(data=request.data)
 		try:
 			serializer.is_valid(raise_exception=True)
 			serializer.save()
-			return Response(serializer.data)
+			return Response(serializer.data, status=status.HTTP_201_CREATED)
 		except ValidationError as e:
 			return Response({'error': e.detail}, status=status.HTTP_400_BAD_REQUEST)
 

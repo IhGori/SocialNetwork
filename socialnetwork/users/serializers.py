@@ -3,6 +3,11 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from .models import User
+import sys
+from PIL import Image
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
+import os
 
 class BaseUserSerializer(serializers.ModelSerializer):
 	gender_choices = (
@@ -47,14 +52,14 @@ class BaseUserSerializer(serializers.ModelSerializer):
 		required=False
 	)
 
-	profile_picture = serializers.ImageField(
+	picture = serializers.ImageField(
 		required=False
 	)
 	
 	friends = serializers.SerializerMethodField()
 
 	class Meta:
-		fields = ('username', 'email', 'password', 'phone', 'gender', 'friends')
+		fields = ('username', 'email', 'password', 'phone', 'gender', 'friends', 'picture')
 
 	def get_friends(self, obj):
 		friends = obj.friends.all()
@@ -98,5 +103,57 @@ class UserUpdateSerializer(BaseUserSerializer):
 			setattr(instance, attr, value)
 		if password is not None:
 			instance.set_password(password)
+		instance.save()
+		return instance
+
+class CreateUserSerializer(BaseUserSerializer):
+	password2 = serializers.CharField(
+		write_only=True,
+		required=True,
+		error_messages={
+			'required': 'Por favor, confirme a sua senha.',
+		}
+	)
+
+	class Meta:
+		model = User
+		fields = BaseUserSerializer.Meta.fields + ('password2',)
+
+	def validate(self, attrs):
+		if attrs['password'] != attrs['password2']:
+			raise serializers.ValidationError("A senha e confirmação de senha não são iguais.")
+		return attrs
+
+	def create(self, validated_data):
+		password = validated_data.pop('password2', None)
+		picture = validated_data.pop('picture', None)
+
+		instance = self.Meta.model(**validated_data)
+		if picture is not None:
+			img = Image.open(picture)
+			img = img.convert('RGB')
+			width, height = img.size
+
+			left = (width - 240) / 2
+			top = (height - 240) / 2
+			right = (width + 240) / 2
+			bottom = (height + 240) / 2
+
+			img_cropped = img.crop((left, top, right, bottom))
+
+			img_resized = img_cropped.resize((240, 240))
+
+			output_buffer = BytesIO()
+
+			img_resized.save(output_buffer, format='JPEG')
+
+			output_buffer.seek(0)
+			picture_temp = InMemoryUploadedFile(output_buffer, None, os.path.basename(picture.name), 'image/jpeg', output_buffer.getbuffer().nbytes, None)
+
+			instance.picture = picture_temp
+
+		if password is not None:
+			instance.set_password(password)
+
 		instance.save()
 		return instance
