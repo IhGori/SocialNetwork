@@ -13,6 +13,8 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .tokens import create_jwt_pair_for_user
+from django.http import HttpResponseBadRequest
+
 
 class RegisterView(APIView):
 	@swagger_auto_schema(
@@ -106,3 +108,46 @@ class UserDetailView(APIView):
 		if serializer.is_valid():
 			serializer.save()
 			return Response(serializer.data)
+
+class AddFriendView(APIView):
+	JWT_authenticator = JWTAuthentication()
+	def post(self, request, friend_id):
+		response = self.JWT_authenticator.authenticate(request)
+		
+		if response is not None:
+			user, token = response
+			friend = get_object_or_404(User, id=friend_id)
+			
+			if friend == user:
+				return HttpResponseBadRequest("Você não pode adicionar a si mesmo como amigo.")
+
+			user.friends.add(friend)
+			return JsonResponse({
+				"message": f"{friend.username} adicionado como amigo."
+			})
+		else:
+			return JsonResponse({
+				"error": 'Token de acesso ausente ou inválido',
+			}, status=status.HTTP_401_UNAUTHORIZED)
+
+class RemoveFriendView(APIView):
+	JWT_authenticator = JWTAuthentication()
+	def post(self, request, friend_id):
+		response = self.JWT_authenticator.authenticate(request)
+		
+		if response is not None:
+			user, token = response
+			friend = get_object_or_404(User, id=friend_id)
+			if friend in user.friends.all():
+				user.friends.remove(friend)
+				return JsonResponse({
+					"message": f"{friend.username} removido como amigo."
+				})
+			else:
+				return Response({
+					"error": "Este usuário não é seu amigo."
+				}, status=400)
+		else:
+			return JsonResponse({
+				"error": 'Token de acesso ausente ou inválido',
+			}, status=status.HTTP_401_UNAUTHORIZED)
