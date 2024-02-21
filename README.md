@@ -27,3 +27,7 @@ If you change the front-end access route, it must be changed in settings.py to t
 CORS_ALLOWED_ORIGINS = [
 	'http://localhost:3000',
 ]
+
+### Routes
+ You can access the route to check all existing endpoints: `http://127.0.0.1:8000/swagger/`
+     
