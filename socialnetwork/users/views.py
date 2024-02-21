@@ -120,6 +120,11 @@ class AddFriendView(APIView):
 			
 			if friend == user:
 				return HttpResponseBadRequest("Você não pode adicionar a si mesmo como amigo.")
+		
+			if friend in user.friends.all():
+				return Response({
+					"error": f"{friend.username} já é seu amigo."
+				}, status=status.HTTP_400_BAD_REQUEST)
 
 			user.friends.add(friend)
 			return JsonResponse({
