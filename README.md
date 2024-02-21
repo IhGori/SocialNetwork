@@ -17,3 +17,8 @@ Run the command docker-compose up -d --build.
 ![image](https://github.com/IhGori/SocialNetwork-BACKEND-API/assets/73910233/467ecf0b-3581-4384-8cff-64962f53a6fa)
 
 
+## Usage
+
+To create superusers:
+ `docker run socialnetwork python3 manage.py createsuperuser`
+
