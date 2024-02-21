@@ -4,36 +4,14 @@ from users.models import User
 from django.shortcuts import render, redirect
 from .models import Post, Comment, Like
 from django.http import JsonResponse
-from .serializers import PostModelSerializer, PostCreateSerializer, PostUpdateSerializer, CommentModelSerializer
+from .serializers import *
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import get_object_or_404
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from rest_framework import status
 
-import sys
-from PIL import Image
-from io import BytesIO
-from django.core.files.uploadedfile import InMemoryUploadedFile
-
 from django.db.models import Q
-
-
-def posts_page(request):
-	return render(request, 'posts.html')
-
-def postPage2(request, *args, **kwargs):
-	user_posts = Post.objects.select_related('author').filter(
-		Q(author=request.user) | Q(author__friends=request.user)
-	).distinct()
-
-	serialized_posts = PostModelSerializer(user_posts, many=True).data
-
-	context = {
-		'user_posts': serialized_posts
-	}
-	return render(request, "posts/postPage.html", context)
-
 
 class PostViewsets(viewsets.ModelViewSet):
 	queryset = Post.objects.all()
@@ -142,7 +120,7 @@ class PostViewsets(viewsets.ModelViewSet):
 				)
 				return JsonResponse({
 					"message": 'Postagem removida com sucesso!',
-				}, status=status.HTTP_204_NO_CONTENT)
+				}, status=status.HTTP_200_OK)
 			else:
 				return JsonResponse({
 					"error": 'Você não tem permissão para remover esta postagem',

@@ -4,7 +4,6 @@ from .views import *
 app_name = 'posts'
 
 urlpatterns = [
-	path('tela', postPage2, name="chat-page"),
 	path('', PostViewsets.as_view({
 		'get': 'index',
 		'post': 'create',
