@@ -31,3 +31,4 @@ CORS_ALLOWED_ORIGINS = [
 ### Routes
  You can access the route to check all existing endpoints: `http://127.0.0.1:8000/swagger/`
      
+![image](https://github.com/IhGori/SocialNetwork-BACKEND-API/assets/73910233/2ffe0c7d-2df6-40ca-8b3a-8f46cea78c41)
