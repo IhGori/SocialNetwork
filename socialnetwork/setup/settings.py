@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 from datetime import timedelta
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -31,12 +32,12 @@ ALLOWED_HOSTS = [
 	if h.strip()
 ]
 
-
 # Application definition
 
 INSTALLED_APPS = [
 	'daphne',
 	'channels',
+	'channels_redis',
 	'django.contrib.admin',
 	'django.contrib.auth',
 	'django.contrib.contenttypes',
@@ -52,11 +53,16 @@ INSTALLED_APPS = [
 	'drf_yasg',
 	'rest_framework_simplejwt',
 	'minio_storage',
+	'corsheaders',
+
+	'users.apps.UsersConfig',
+	'posts.apps.PostsConfig',
+	'chat.apps.ChatConfig',
 ]
 
 SITE_ID = 1
 
-LOGIN_REDIRECT_URL = "chat-page"
+# LOGIN_REDIRECT_URL = "chat-page"
 LOGOU_REDIRECT_URL = "login-user"
 # LOGIN_URL = '/api/user/login'
 
@@ -69,6 +75,7 @@ MIDDLEWARE = [
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	"allauth.account.middleware.AccountMiddleware",
+	'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'setup.urls'
@@ -130,7 +137,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=999999),
 	'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 	# 'SIGNING_KEY': SECRET_KEY,
 	'AUTH_HEADER_TYPES': ('Bearer',),
@@ -182,8 +189,9 @@ STATIC_ROOT = './static_files/'
 DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
 # STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
 MINIO_STORAGE_ENDPOINT = 'minio:9000'
-MINIO_STORAGE_ACCESS_KEY = '3Vy5PXpCJV1g0THvWjEr'
-MINIO_STORAGE_SECRET_KEY = 'ijhi6NEsQHI5aUdj0dU1TeFdJfwZUUfx2rIiibkX'
+#MINIO_STORAGE_ENDPOINT = 'http://localhost:9000'
+MINIO_STORAGE_ACCESS_KEY = os.getenv('MINIO_STORAGE_ACCESS_KEY')
+MINIO_STORAGE_SECRET_KEY = os.getenv('MINIO_STORAGE_SECRET_KEY')
 MINIO_STORAGE_USE_HTTPS = False
 MINIO_STORAGE_MEDIA_OBJECT_METADATA = {"Cache-Control": "max-age=1000"}
 MINIO_STORAGE_MEDIA_BUCKET_NAME = 'local-media'
@@ -199,3 +207,24 @@ MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = "users.User"
+
+CORS_ALLOWED_ORIGINS = [
+	'http://localhost:3000',
+]
+
+CORS_ALLOW_METHODS = [
+	'GET',
+	'POST',
+	'PUT',
+	'PATCH',
+	'DELETE',
+	'OPTIONS'
+]
+
+CORS_ALLOW_HEADERS = [
+	'Accept',
+	'Accept-Language',
+	'Content-Language',
+	'Content-Type',
+	'Authorization',
+]

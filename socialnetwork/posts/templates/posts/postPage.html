@@ -1,0 +1,67 @@
+<!-- posts.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Posts</title>
+</head>
+
+<body>
+    <h1>Minhas Postagens e dos Amigos</h1>
+    <div id="posts-container">
+        <!-- Aqui serão exibidas as postagens -->
+    </div>
+
+    <h2>Criar Nova Postagem</h2>
+    <form id="post-form">
+        <textarea id="body" placeholder="Corpo da postagem"></textarea>
+        <button type="submit">Postar</button>
+    </form>
+
+    <script>
+        const postsContainer = document.getElementById('posts-container');
+        const postForm = document.getElementById('post-form');
+
+        // Função para enviar a nova postagem para o servidor
+        async function createPost(event) {
+            event.preventDefault();
+            const body = document.getElementById('body').value;
+
+            // Enviar a nova postagem para o servidor
+            const response = await fetch('/api/posts/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ body })
+            });
+
+            if (response.ok) {
+                // Atualizar a lista de postagens após criar uma nova
+                fetchPosts();
+            }
+        }
+
+        // Função para buscar e exibir as postagens do servidor
+        async function fetchPosts() {
+            const response = await fetch('/api/posts/');
+            const data = await response.json();
+
+            postsContainer.innerHTML = ''; // Limpar o conteúdo anterior das postagens
+
+            data.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.innerHTML = `<p>${post.body}</p>`;
+                postsContainer.appendChild(postElement);
+            });
+        }
+
+        // Ao enviar o formulário, chamar a função createPost
+        postForm.addEventListener('submit', createPost);
+
+        // Chamar fetchPosts ao carregar a página para exibir as postagens
+        fetchPosts();
+    </script>
+</body>
+
+</html>

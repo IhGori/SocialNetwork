@@ -46,6 +46,7 @@ db.sqlite3
 *.iws
 
 # Minio
+minio/
 minio/.minio.sys/buckets/.bloomcycle.bin/
 minio/.minio.sys/buckets/.usage-cache.bin.bkp/
 minio/.minio.sys/buckets/.usage-cache.bin/
@@ -292,3 +293,5 @@ GitHub.sublime-settings
 !.vscode/launch.json
 !.vscode/extensions.json
 .history
+
+socialnetwork/setup/.env
