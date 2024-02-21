@@ -20,7 +20,7 @@ Run the command docker-compose up -d --build.
 ## Usage
 
 To create superusers:
- `docker run socialnetwork python3 manage.py createsuperuser`
+ `docker exec socialnetwork python3 manage.py createsuperuser`
 
 If you change the front-end access route, it must be changed in settings.py to the new address
 
