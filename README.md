@@ -22,3 +22,8 @@ Run the command docker-compose up -d --build.
 To create superusers:
  `docker run socialnetwork python3 manage.py createsuperuser`
 
+If you change the front-end access route, it must be changed in settings.py to the new address
+
+CORS_ALLOWED_ORIGINS = [
+	'http://localhost:3000',
+]
