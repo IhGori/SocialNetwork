@@ -9,7 +9,7 @@ The application leverages the power of containerization to ensure seamless deplo
 ## Install
 To make use of it, you'll need to create a .env file with the parameters used in the .env-example, as well as define the access key and secret key after gaining access to the MinIO bucket.
 
-Run the command docker-compose up -d --build.
+Run the command docker-compose up -d --build
 
 ![image](https://github.com/IhGori/SocialNetwork-BACKEND-API/assets/73910233/3aab0e14-76f2-4e99-a192-84a95caa9214)
 
